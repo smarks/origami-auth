@@ -42,3 +42,5 @@ pytest
 > Note: a deployed project that already has its own custom `AUTH_USER_MODEL`
 > (e.g. tarmar-studio) can share this app's *views/forms/templates* via a careful
 > refactor, but should not swap its live user model — that breaks existing data.
+> See **[docs/tarmar-studio-integration.md](docs/tarmar-studio-integration.md)**
+> for the full adoption guide, options, and constraints.
