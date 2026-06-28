@@ -3,20 +3,20 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "tarmar-auth"
+name = "origami-auth"
 version = "0.1.0"
 description = "A small reusable Django login app (user model + register/login/logout/profile) shared across projects."
 requires-python = ">=3.11"
-dependencies = ["Django>=4.2"]
+dependencies = ["Django>=4.2", "origami-common"]
 
 [project.optional-dependencies]
 test = ["pytest>=8.0", "pytest-django>=4.8"]
 
 [tool.setuptools.packages.find]
-include = ["tarmar_auth*"]
+include = ["origami_auth*"]
 
 [tool.setuptools.package-data]
-tarmar_auth = ["templates/tarmar_auth/*.html"]
+origami_auth = ["templates/origami_auth/*.html"]
 
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "tests.settings"

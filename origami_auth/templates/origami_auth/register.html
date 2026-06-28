@@ -1,0 +1,9 @@
+{% extends "origami_auth/base.html" %}
+{% block title %}Create an account{% endblock %}
+{% block content %}
+<h1>Create an account</h1>
+<form method="post">{% csrf_token %}{{ form.as_p }}
+  <button type="submit">Register</button>
+</form>
+<p>Already have one? <a href="{% url 'origami_auth:login' %}">Log in</a>.</p>
+{% endblock %}

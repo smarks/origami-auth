@@ -1,4 +1,4 @@
-"""Minimal Django settings for testing the tarmar_auth app in isolation."""
+"""Minimal Django settings for testing the origami_auth app in isolation."""
 
 SECRET_KEY = "test-secret-key"
 
@@ -7,7 +7,7 @@ INSTALLED_APPS = [
     "django.contrib.auth",
     "django.contrib.sessions",
     "django.contrib.messages",
-    "tarmar_auth",
+    "origami_auth",
 ]
 
 MIDDLEWARE = [
@@ -20,7 +20,9 @@ MIDDLEWARE = [
 
 DATABASES = {"default": {"ENGINE": "django.db.backends.sqlite3", "NAME": ":memory:"}}
 
-AUTH_USER_MODEL = "tarmar_auth.User"
+CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}
+
+AUTH_USER_MODEL = "origami_auth.User"
 ROOT_URLCONF = "tests.urls"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 LOGIN_REDIRECT_URL = "/profile/"

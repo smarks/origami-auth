@@ -1,0 +1,12 @@
+{% extends "tarmar_auth/base.html" %}
+{% block title %}Users{% endblock %}
+{% block content %}
+<h1>Users</h1>
+<ul>
+  {% for u in users %}
+    <li><a href="{% url 'tarmar_auth:user_profile' u.pk %}">{{ u.username }}</a>{% if u.real_name %} — {{ u.real_name }}{% endif %}</li>
+  {% empty %}
+    <li>No users.</li>
+  {% endfor %}
+</ul>
+{% endblock %}

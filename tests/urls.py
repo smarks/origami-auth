@@ -1,3 +1,3 @@
 from django.urls import include, path
 
-urlpatterns = [path("", include("tarmar_auth.urls"))]
+urlpatterns = [path("", include("origami_auth.urls"))]
