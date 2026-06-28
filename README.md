@@ -49,15 +49,17 @@ re-parents its concrete `User` onto `AbstractOrigamiUser`:
 from origami_auth.base import AbstractOrigamiUser
 
 class User(AbstractOrigamiUser):
-    class Meta(AbstractOrigamiUser.Meta):
+    # Plain Meta (do NOT inherit AbstractOrigamiUser.Meta): match the app's
+    # existing recorded migration state exactly. Inheriting the base Meta adds
+    # explicit verbose_name options and produces a spurious AlterModelOptions
+    # migration.
+    class Meta:
         db_table = "accounts_user"   # keep the existing table
 ```
 
 Because the abstract base's fields match the app's current ones verbatim, this is
 **migration-neutral** (`makemigrations --check` reports nothing). The app imports
-the views/forms/mixins directly and keeps its own URLs/templates. See
-**[docs/tarmar-studio-integration.md](docs/tarmar-studio-integration.md)** for the
-full guide and verification checklist.
+the views/forms/mixins directly and keeps its own URLs/templates.
 
 ## Develop
 
