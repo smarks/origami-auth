@@ -24,6 +24,13 @@ CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"
 
 AUTH_USER_MODEL = "origami_auth.User"
 ROOT_URLCONF = "tests.urls"
+
+# Exercise the opt-in email reset chain in this suite. Consuming projects only
+# set this once they have real outbound email configured.
+ORIGAMI_AUTH_ENABLE_PASSWORD_RESET = True
+EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
+DEFAULT_FROM_EMAIL = "accounts@example.com"
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 LOGIN_REDIRECT_URL = "/profile/"
 LOGOUT_REDIRECT_URL = "/login/"

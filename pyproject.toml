@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "origami-auth"
-version = "0.1.0"
+version = "0.3.0"
 description = "A small reusable Django login app (user model + register/login/logout/profile) shared across projects."
 requires-python = ">=3.11"
 dependencies = ["Django>=4.2", "origami-common"]
@@ -16,7 +16,7 @@ test = ["pytest>=8.0", "pytest-django>=4.8"]
 include = ["origami_auth*"]
 
 [tool.setuptools.package-data]
-origami_auth = ["templates/origami_auth/*.html"]
+origami_auth = ["templates/origami_auth/*.html", "templates/origami_auth/*.txt"]
 
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "tests.settings"

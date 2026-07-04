@@ -1,0 +1,9 @@
+{% extends "origami_auth/base.html" %}
+{% block title %}Edit profile{% endblock %}
+{% block content %}
+<h1>Edit profile</h1>
+<form method="post">{% csrf_token %}{{ form.as_p }}
+  <button type="submit">Save</button>
+</form>
+<p><a href="{% url 'origami_auth:profile' %}">Back to profile</a></p>
+{% endblock %}

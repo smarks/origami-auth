@@ -14,6 +14,16 @@ It provides:
 - **register / login (rate-limited) / logout / profile / users-admin** views, a
   rich registration form bound to `get_user_model()`, URLs, and override-friendly
   templates (each extends `origami_auth/base.html`).
+- **Profile editing** (`profile/edit/`) — a form-based view where the signed-in
+  user edits their own profile fields (and only their own).
+- **Password change** (`password/change/`) — Django's built-in logged-in
+  password change, rate-limited, with app templates.
+- **Password reset by email** — Django's full reset chain, **opt-in**: the
+  routes only exist when the consuming project sets
+  `ORIGAMI_AUTH_ENABLE_PASSWORD_RESET = True` *and* has real outbound email
+  configured (`EMAIL_BACKEND` / SMTP settings). Off by default so projects
+  without SMTP never render a reset link whose emails go nowhere. When enabled,
+  the login page grows a "Forgot your password?" link automatically.
 - `AdminOrDMRequiredMixin` for role-gated views.
 
 ## Greenfield project (no existing user model)

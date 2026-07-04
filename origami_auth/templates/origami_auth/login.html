@@ -6,4 +6,7 @@
   <button type="submit">Log in</button>
 </form>
 <p>No account? <a href="{% url 'origami_auth:register' %}">Create one</a>.</p>
+{% if password_reset_enabled %}
+<p><a href="{% url 'origami_auth:password_reset' %}">Forgot your password?</a></p>
+{% endif %}
 {% endblock %}

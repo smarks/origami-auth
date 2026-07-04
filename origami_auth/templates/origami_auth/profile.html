@@ -3,6 +3,12 @@
 {% block content %}
 <h1>{{ request.user.username }}</h1>
 {% if request.user.email %}<p>{{ request.user.email }}</p>{% endif %}
+{% if profile_user == request.user %}
+<p>
+  <a href="{% url 'origami_auth:profile_edit' %}">Edit profile</a> &middot;
+  <a href="{% url 'origami_auth:password_change' %}">Change password</a>
+</p>
+{% endif %}
 <form method="post" action="{% url 'origami_auth:logout' %}">{% csrf_token %}
   <button type="submit">Log out</button>
 </form>

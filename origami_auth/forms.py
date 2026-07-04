@@ -10,6 +10,19 @@ from .base import CONTACT_CHOICES, DISCORD_VALIDATOR, PHONE_VALIDATOR
 USERNAME_REGEX = re.compile(r"^[a-zA-Z0-9_-]{1,25}$")
 
 
+class ProfileEditForm(forms.ModelForm):
+    """Edit the signed-in user's own profile fields (never username or roles).
+
+    A plain ModelForm so the field definitions and validators (phone/discord
+    regex, email format) stay single-sourced on ``AbstractOrigamiUser``. Binds
+    to whatever user model the project configures, like ``RegistrationForm``.
+    """
+
+    class Meta:
+        model = get_user_model()
+        fields = ["real_name", "email", "phone", "discord", "preferred_contact"]
+
+
 class RegistrationForm(UserCreationForm):
     """Rich registration: username/password plus optional Tarmar profile fields.
 
