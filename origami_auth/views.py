@@ -175,6 +175,24 @@ PROFILE_FIELDS = {"real_name", "email", "phone", "discord", "preferred_contact"}
 ROLE_FIELDS = {"is_role_admin", "is_dm", "is_player"}
 
 
+def _may_manage_target(actor, target) -> bool:
+    """Whether ``actor`` is allowed to edit or delete ``target``.
+
+    ``can_manage_users`` is ``is_role_admin or is_dm``, so a plain DM can reach the
+    admin endpoints. Without a target-privilege check that let a DM rewrite a
+    role-admin's or a superuser's profile (e.g. their email, enabling a reset
+    takeover) or delete them outright — a privilege escalation (#260). A privileged
+    target (a superuser or a role admin) may therefore only be managed by a role
+    admin or a superuser; a mere DM cannot touch accounts that outrank them.
+    """
+    target_is_privileged = (
+        getattr(target, "is_superuser", False) or target.is_role_admin
+    )
+    if not target_is_privileged:
+        return True
+    return actor.is_role_admin or getattr(actor, "is_superuser", False)
+
+
 @login_required
 @require_POST
 @rate_limit("profile_update", max_requests=30, window_seconds=60)
@@ -196,6 +214,11 @@ def profile_update_field(request, user_id=None):
         try:
             target_user = user_model.objects.get(pk=user_id)
         except user_model.DoesNotExist:
+            return _permission_denied()
+        # A DM must not edit an account that outranks them (role admin / superuser)
+        # — otherwise rewriting a privileged user's email enables account takeover
+        # (#260).
+        if not _may_manage_target(request.user, target_user):
             return _permission_denied()
     else:
         target_user = request.user
@@ -253,6 +276,11 @@ def delete_user(request, user_id):
         return _permission_denied()
 
     user = get_object_or_404(get_user_model(), pk=user_id)
+
+    # A DM must not delete an account that outranks them (role admin / superuser);
+    # only a role admin or superuser may (#260).
+    if not _may_manage_target(request.user, user):
+        return _permission_denied()
 
     # Prevent self-deletion
     if user.pk == request.user.pk:

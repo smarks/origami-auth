@@ -125,3 +125,86 @@ def test_delete_user_blocks_self_and_allows_admin(client):
     victim_url = reverse("origami_auth:delete_user", args=[victim.pk])
     assert _post_json(client, victim_url, {}).status_code == 200
     assert not User.objects.filter(pk=victim.pk).exists()
+
+
+@pytest.mark.django_db
+def test_dm_cannot_edit_a_privileged_account(client):
+    # #260: can_manage_users is (is_role_admin or is_dm), so a DM reaches the admin
+    # write endpoint. It must NOT let a DM rewrite a role-admin's (or superuser's)
+    # profile — rewriting the email would enable an account-takeover via reset.
+    dm = User.objects.create_user(
+        username="dm", password="GalleonMist7q", is_dm=True
+    )
+    role_admin = User.objects.create_user(
+        username="boss", password="GalleonMist7q",
+        is_role_admin=True, email="boss@origin.test",
+    )
+    superuser = User.objects.create_superuser(
+        username="root", password="GalleonMist7q", email="root@origin.test"
+    )
+    client.login(username="dm", password="GalleonMist7q")
+
+    for target in (role_admin, superuser):
+        url = reverse("origami_auth:user_profile_update_field", args=[target.pk])
+        resp = _post_json(client, url, {"field": "email", "value": "pwned@evil.test"})
+        assert resp.status_code == 403
+        target.refresh_from_db()
+        assert target.email != "pwned@evil.test"        # the rewrite was refused
+
+    assert dm  # silence unused
+
+
+@pytest.mark.django_db
+def test_dm_cannot_delete_a_privileged_account(client):
+    # #260: the same DM must not delete a role-admin or a superuser.
+    User.objects.create_user(username="dm", password="GalleonMist7q", is_dm=True)
+    role_admin = User.objects.create_user(
+        username="boss", password="GalleonMist7q", is_role_admin=True
+    )
+    superuser = User.objects.create_superuser(
+        username="root", password="GalleonMist7q", email="root@origin.test"
+    )
+    client.login(username="dm", password="GalleonMist7q")
+
+    for target in (role_admin, superuser):
+        url = reverse("origami_auth:delete_user", args=[target.pk])
+        assert _post_json(client, url, {}).status_code == 403
+        assert User.objects.filter(pk=target.pk).exists()   # still there
+
+
+@pytest.mark.django_db
+def test_dm_can_still_manage_a_plain_player(client):
+    # The fix is scoped: a DM keeps its normal power over ordinary (non-privileged)
+    # accounts — it may edit and delete a plain player.
+    User.objects.create_user(username="dm", password="GalleonMist7q", is_dm=True)
+    player = User.objects.create_user(username="pleb", password="GalleonMist7q")
+    client.login(username="dm", password="GalleonMist7q")
+
+    edit_url = reverse("origami_auth:user_profile_update_field", args=[player.pk])
+    assert _post_json(
+        client, edit_url, {"field": "real_name", "value": "Nobody"}).status_code == 200
+    player.refresh_from_db()
+    assert player.real_name == "Nobody"
+
+    delete_url = reverse("origami_auth:delete_user", args=[player.pk])
+    assert _post_json(client, delete_url, {}).status_code == 200
+    assert not User.objects.filter(pk=player.pk).exists()
+
+
+@pytest.mark.django_db
+def test_role_admin_can_still_manage_a_privileged_account(client):
+    # A role admin (the app's top admin) keeps power over other privileged accounts.
+    User.objects.create_user(
+        username="boss", password="GalleonMist7q", is_role_admin=True
+    )
+    other_admin = User.objects.create_user(
+        username="boss2", password="GalleonMist7q",
+        is_role_admin=True, email="boss2@origin.test",
+    )
+    client.login(username="boss", password="GalleonMist7q")
+
+    url = reverse("origami_auth:user_profile_update_field", args=[other_admin.pk])
+    resp = _post_json(client, url, {"field": "email", "value": "new@origin.test"})
+    assert resp.status_code == 200
+    other_admin.refresh_from_db()
+    assert other_admin.email == "new@origin.test"
