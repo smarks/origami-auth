@@ -181,16 +181,20 @@ def _may_manage_target(actor, target) -> bool:
     ``can_manage_users`` is ``is_role_admin or is_dm``, so a plain DM can reach the
     admin endpoints. Without a target-privilege check that let a DM rewrite a
     role-admin's or a superuser's profile (e.g. their email, enabling a reset
-    takeover) or delete them outright — a privilege escalation (#260). A privileged
-    target (a superuser or a role admin) may therefore only be managed by a role
-    admin or a superuser; a mere DM cannot touch accounts that outrank them.
+    takeover) or delete them outright — a privilege escalation (#260).
+
+    The tiers are ranked, not flattened (#311): a superuser sits above a role
+    admin, so a superuser target may be managed only by ANOTHER superuser — never
+    by a mere role_admin, which would otherwise take over or delete the site's
+    superuser. A role-admin target is managed by a role admin or a superuser; a
+    plain (non-privileged) target by any caller that reached these endpoints.
     """
-    target_is_privileged = (
-        getattr(target, "is_superuser", False) or target.is_role_admin
-    )
-    if not target_is_privileged:
-        return True
-    return actor.is_role_admin or getattr(actor, "is_superuser", False)
+    actor_is_superuser = getattr(actor, "is_superuser", False)
+    if getattr(target, "is_superuser", False):
+        return actor_is_superuser
+    if target.is_role_admin:
+        return actor.is_role_admin or actor_is_superuser
+    return True
 
 
 @login_required

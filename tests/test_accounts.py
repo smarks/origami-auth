@@ -173,6 +173,55 @@ def test_dm_cannot_delete_a_privileged_account(client):
 
 
 @pytest.mark.django_db
+def test_role_admin_cannot_edit_or_delete_a_superuser(client):
+    # #311: a non-superuser role_admin outranks DMs and plain players, but NOT the
+    # site superuser. Flattening role_admin and superuser into one tier let a mere
+    # role_admin rewrite a superuser's email (reset takeover) or delete it. The
+    # superuser tier is manageable only by another superuser.
+    role_admin = User.objects.create_user(
+        username="boss", password="GalleonMist7q", is_role_admin=True
+    )
+    superuser = User.objects.create_superuser(
+        username="root", password="GalleonMist7q", email="root@origin.test"
+    )
+    client.login(username="boss", password="GalleonMist7q")
+
+    edit_url = reverse("origami_auth:user_profile_update_field", args=[superuser.pk])
+    resp = _post_json(client, edit_url, {"field": "email", "value": "pwned@evil.test"})
+    assert resp.status_code == 403
+    superuser.refresh_from_db()
+    assert superuser.email != "pwned@evil.test"
+
+    delete_url = reverse("origami_auth:delete_user", args=[superuser.pk])
+    assert _post_json(client, delete_url, {}).status_code == 403
+    assert User.objects.filter(pk=superuser.pk).exists()
+    assert role_admin  # silence unused
+
+
+@pytest.mark.django_db
+def test_superuser_can_manage_another_superuser(client):
+    # The tier is not a lockout: a superuser still manages its peers, so the site
+    # is never left unable to administer a superuser account (#311). The acting
+    # superuser is also a role_admin, since can_manage_users (role_admin or DM) is
+    # the gate that even reaches these endpoints.
+    actor = User.objects.create_superuser(
+        username="root", password="GalleonMist7q", email="root@origin.test"
+    )
+    actor.is_role_admin = True
+    actor.save(update_fields=["is_role_admin"])
+    peer = User.objects.create_superuser(
+        username="root2", password="GalleonMist7q", email="root2@origin.test"
+    )
+    client.login(username="root", password="GalleonMist7q")
+
+    edit_url = reverse("origami_auth:user_profile_update_field", args=[peer.pk])
+    assert _post_json(
+        client, edit_url, {"field": "real_name", "value": "Peer"}).status_code == 200
+    peer.refresh_from_db()
+    assert peer.real_name == "Peer"
+
+
+@pytest.mark.django_db
 def test_dm_can_still_manage_a_plain_player(client):
     # The fix is scoped: a DM keeps its normal power over ordinary (non-privileged)
     # accounts — it may edit and delete a plain player.
