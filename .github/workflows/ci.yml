@@ -18,6 +18,12 @@ jobs:
           python-version: '3.11'
           cache: 'pip'
 
+      # origami-common is a sibling git dependency (not on PyPI), so pip cannot
+      # resolve it from the index — install it from GitHub first, then the
+      # editable install of this package plus its test extra.
+      - name: Install origami-common (git dependency)
+        run: pip install git+https://github.com/smarks/origami-common.git@main
+
       - name: Install
         run: pip install -e .[test]
 
